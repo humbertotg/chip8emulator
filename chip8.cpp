@@ -1,11 +1,33 @@
-#include <iostream>
-#include <fstream>
 #include <chrono>
+#include <cstdint>
+#include <cstring>
+#include <fstream>
 #include <random>
+#include <iostream>
 #include "chip8.h"
 
 const unsigned int START_ADDR = 0x200;
 const unsigned int FONT_START_ADDR = 0x50;
+
+uint8_t fontset[FONTSET_SIZE] =
+	{
+		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+		0x20, 0x60, 0x20, 0x20, 0x70, // 1
+		0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+		0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+		0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+		0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+		0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+		0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+		0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+		0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+		0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+		0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+		0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+		0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+	};
 
 Chip8::Chip8()
 {
@@ -14,9 +36,29 @@ Chip8::Chip8()
     {
         memory[FONT_START_ADDR + i ] = fontset[i];
     }
+    memset(vid,0,sizeof(vid));
 }
 
-void Chip8::loadRom(std::string &filename)
+void Chip8::draw()
+{
+    for(int i = 0; i < 32;i++){
+        for(int j = 0; j < 64;j++){
+            if(vid[i * 32 + j] == 0xFFFFFFFF){
+                std::cout<<"*";
+            } else{
+                std::cout<<" ";
+            }
+        }
+        std::cout<<std::endl;
+    }
+    std::system("clear");
+}
+
+uint16_t Chip8::getInstruction(){
+    return instruction;
+}
+
+void Chip8::loadRom(char const* filename)
 {
     std::ifstream rom(filename,std::ios::binary | std::ios::ate);
     if(rom.is_open())
@@ -36,7 +78,7 @@ void Chip8::loadRom(std::string &filename)
 
 void Chip8::cycle()
 {
-    instruction = memory[pc];
+    instruction = (memory[pc] << 8) | memory[pc + 1];
     pc += 2;
     execute();
     
@@ -53,15 +95,15 @@ void Chip8::cycle()
 
 void Chip8::execute()
 {
-    switch(instruction & 0XF00)
+    switch(instruction & 0XF000)
     {
-        case 0x0:
-            switch(instruction & 0XFF)
+        case 0x0000:
+            switch(instruction & 0X00FF)
             {
-                case 0xE0:
+                case 0x00E0:
                     memset(vid,0,sizeof(vid));
                     break;
-                case 0xEE:
+                case 0x00EE:
                     --sp;
                     pc = stack[sp];
                     break;
@@ -69,15 +111,16 @@ void Chip8::execute()
                     std::cout<<"error";
             }
             break;
-        case 0x1:
+        case 0x1000:
             pc = instruction & 0x0FFF;
             break;
-        case 0x2:
+        case 0x2000:
             stack[sp] = pc;
             ++sp;
             pc = instruction & 0X0FFF;
             break;
-        case 0x3:
+        case 0x3000:
+            {
             uint8_t Vx = (instruction & 0xF00) >> 8;
             uint8_t imme = (instruction & 0xFF); 
 
@@ -85,8 +128,10 @@ void Chip8::execute()
             {
                 pc += 2;
             }
+            }
             break;
-        case 0x4:
+        case 0x4000:
+            {
             uint8_t Vx = (instruction & 0xF00) >> 8;
             uint8_t imme = (instruction & 0xFF); 
 
@@ -94,8 +139,11 @@ void Chip8::execute()
             {
                 pc += 2;
             }
+            
+            }
             break;
-        case 0x5:
+        case 0x5000:
+        {
             uint8_t Vx = (instruction & 0xF00) >> 8;
             uint8_t Vy = (instruction & 0xF0) >> 4;
 
@@ -104,22 +152,25 @@ void Chip8::execute()
                 pc += 2;
             }
             break;
-        case 0x6:
+        }
+        case 0x6000: 
+        {
             uint8_t Vx = (instruction & 0xF00) >> 8;
-            uint8_t Vy = (instruction & 0xF0) >> 4;
-
-            if(registers[Vx] != registers[Vy])
-            {
-                pc += 2;
-            }
+            uint8_t imme = (instruction & 0xFF);
+            registers[Vx] = imme;
             break;
-        case 0x7:
+
+        }
+        case 0x7000:
+        {
             uint8_t Vx = (instruction & 0xF00) >> 8;
             uint8_t imme = (instruction & 0xFF); 
 
             registers[Vx] += imme;
             break;
-        case 0x8:
+        }
+        case 0x8000:
+        {
             uint8_t Vx = (instruction & 0xF00) >> 8;
             uint8_t Vy = (instruction & 0xF0) >> 4;
             switch(instruction & 0xF)
@@ -137,6 +188,7 @@ void Chip8::execute()
                     registers[Vx] ^= registers[Vy];
                     break;
                 case 0x04:
+                {
                     uint16_t sum = registers[Vx] + registers[Vy];
                     if(sum > 255)
                     {
@@ -149,6 +201,7 @@ void Chip8::execute()
 
                     registers[Vx] = sum & 0xFF;
                     break;
+                }
                 case 0x5:
                     if(registers[Vx] > registers[Vy])
                     {
@@ -186,7 +239,9 @@ void Chip8::execute()
             
             }
             break;
-        case 0x9:
+        }
+        case 0x9000:
+        {
             uint8_t Vx = (instruction & 0xF00) >> 8;
             uint8_t Vy = (instruction & 0xF0) >> 4;
             if(registers[Vx] != registers[Vy])
@@ -194,19 +249,33 @@ void Chip8::execute()
                 pc += 2;
             }
             break;
-        case 0xA:
+        }
+        case 0xA000:
+        {
             uint16_t addr = instruction & 0xFFF;
 
             index = addr;
             break;
-        case 0xB:
+        }
+        case 0xB000:
+        {
             uint16_t addr = instruction & 0xFFF;
 
             pc = registers[0] + addr;
             break;
-        //case 0xC: TODO
+        }
+        case 0xC000:
+        {
+            uint8_t Vx = (instruction & 0xF00) >> 8;
+            uint8_t imme = (instruction & 0xFF); 
+            std::default_random_engine rand;
+            std::uniform_int_distribution<uint8_t> randomByte;
+            registers[Vx] = randomByte(rand) & imme;
+            break;
+        }
         
-        case 0xD:
+        case 0xD000:
+        {
             uint8_t Vx = (instruction & 0xF00) >> 8;
             uint8_t Vy = (instruction & 0xF0) >> 4;
             uint8_t h = instruction & 0xF;
@@ -236,10 +305,12 @@ void Chip8::execute()
                 }
             }
             break;
-        case 0xE:
+        }
+        case 0xE000:
             switch(instruction & 0xFF)
             {
                 case 0x9E:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
                     uint8_t key = registers[Vx];
@@ -249,7 +320,9 @@ void Chip8::execute()
                         pc += 2;
                     }
                     break;
+                }
                 case 0xA1:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
                     uint8_t key = registers[Vx];
@@ -259,19 +332,23 @@ void Chip8::execute()
                         pc += 2;
                     }
                     break;
+                }
                 default:
                     std::cout<<"error";
             }
             break;
-        case 0xF:
+        case 0xF000:
             switch(instruction & 0xFF)
             {
                 case 0x07:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
                     registers[Vx] = delay_timer;
                     break;
+                }
                 case 0x0A:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
                     bool keyPress = false;
 
@@ -289,28 +366,38 @@ void Chip8::execute()
                         pc -= 2;
                     }
                     break;
+                }
                 case 0x15:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
                     delay_timer = registers[Vx];
                     break;
+                }
                 case 0x18:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
                     sound_timer = registers[Vx];
                     break;
+                }
                 case 0x1E:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
                     index += registers[Vx];
                     break;
+                }
                 case 0x29:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
                     uint8_t digit = registers[Vx];
                     index = FONT_START_ADDR + (5 * digit);
                     break;
+                }
                 case 0x33:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
                     uint8_t num = registers[Vx];
 
@@ -320,30 +407,37 @@ void Chip8::execute()
                     memory[index + 1] = num % 10;
                     num /= 10;
 
-                    memory[index] = value % 10;
+                    memory[index] = num % 10;
                     break;
+                }
                 case 0x55:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
-                    for(uint8_t i = 0; i <= Vx;i++)
+                    for(uint8_t i = 0; i <= Vx;++i)
                     {
                         memory[index + i] = registers[i];
                     }
                     break;
+                }
                 case 0x65:
+                {
                     uint8_t Vx = (instruction & 0xF00) >> 8;
 
-                    for(uint8_t i = 0; i <= Vx;i++)
+                    for(uint8_t i = 0; i <= Vx;++i)
                     {
-                        registers[i] = memory[index + 1];
+                        registers[i] = memory[index + i];
                     }
                     break;
-                    default:
+                }
+                default:
                     std::cout<<"error";
+                    break;
             }
             break;
         default:
             std::cout<<"error";
+            break;
     }
 }
 

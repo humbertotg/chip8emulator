@@ -1,12 +1,17 @@
 #include <iostream>
+#include <stdlib.h>
+#include <chrono>
 #include "chip8.h"
 
-int main()
-{
+int main()  
+{   
     Chip8 test;
-    
+    char const* filename = "pong.rom";
+    test.loadRom(filename);
     while(true)
-    std::cout<<"hello";
-
+    {
+		test.cycle();
+        std::cout<<test.getInstruction()<<std::endl;
+    }
 }
 
