@@ -37,6 +37,7 @@ Chip8::Chip8()
         memory[FONT_START_ADDR + i ] = fontset[i];
     }
     memset(vid,0,sizeof(vid));
+    sp = 0;
 }
 
 void Chip8::draw()

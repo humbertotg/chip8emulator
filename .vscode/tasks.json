@@ -8,6 +8,12 @@
                 "-g",
                 "${file}",
                 "${workspaceFolder}/chip8.cpp",
+                "-Iinclude",
+                "-Llib",
+                "-DGLEW_STATIC",
+                "-lglew32",
+                "-lopengl32",
+                "-lglfw3dll",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
