@@ -2,15 +2,15 @@
 Chip8 Emulator written in C++ with OpenGL for input output
 
 # What is it?
-I made this project with the goal of learning more about emulator development in C++ and an introduction to OpenGL contexts with GLWF. Chip-8 is an interpreted programming language developed in the 70s. Chip-8 programs run on a virtual machine, hence why the project is more of an interpreter than it is an emulator. The standard version has only 35 instruction of the same length, which is why it's a popular starting point for learning emulation. 
+I made this project with the goal of learning more about emulator development in C++ and an introduction to OpenGL contexts with GLFW. Chip-8 is an interpreted programming language developed in the 70s. Chip-8 programs run on a virtual machine, hence why the project is more of an interpreter than it is an emulator. The standard version has only 35 instruction of the same length, which is why it's a popular starting point for learning emulation. 
 
 # Prerequisites
 - A C++ compiler 
-- OpenGL library GLWF (Tested with GLWF 3.3.3)
+- OpenGL library GLFW (Tested with GLFW 3.3.3)
 
 # How to build
     g++ src/main.cpp src/chip.cpp src/ui.cpp -I(path to header files) - L(path to library) -lopengl32 -lglfw3dll -o (outputFileName)
-The GLWF dll needs to be where the output file is
+The GLFW dll needs to be where the output file is
 
 # Usage
     main.exe path/to/rom
