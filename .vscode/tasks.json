@@ -7,15 +7,14 @@
             "args": [
                 "-g",
                 "${file}",
-                "${workspaceFolder}/chip8.cpp",
+                "${workspaceFolder}/src/chip8.cpp",
+                "${workspaceFolder}/src/ui.cpp",
                 "-Iinclude",
                 "-Llib",
-                "-DGLEW_STATIC",
-                "-lglew32",
                 "-lopengl32",
                 "-lglfw3dll",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${workspaceFolder}\\build\\${fileBasenameNoExtension}.exe"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

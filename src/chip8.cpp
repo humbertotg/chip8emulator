@@ -1,4 +1,3 @@
-#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -8,6 +7,7 @@
 
 const unsigned int START_ADDR = 0x200;
 const unsigned int FONT_START_ADDR = 0x50;
+const unsigned int FONTSET_SIZE = 80;
 
 uint8_t fontset[FONTSET_SIZE] =
 	{
@@ -40,24 +40,6 @@ Chip8::Chip8()
     sp = 0;
 }
 
-void Chip8::draw()
-{
-    for(int i = 0; i < 32;i++){
-        for(int j = 0; j < 64;j++){
-            if(vid[i * 32 + j] == 0xFFFFFFFF){
-                std::cout<<"*";
-            } else{
-                std::cout<<" ";
-            }
-        }
-        std::cout<<std::endl;
-    }
-    std::system("clear");
-}
-
-uint16_t Chip8::getInstruction(){
-    return instruction;
-}
 
 void Chip8::loadRom(char const* filename)
 {
